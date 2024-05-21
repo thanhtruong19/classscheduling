@@ -7,9 +7,20 @@ import Control.LenLichLopHocPhanDAO81;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import Models.GioHoc81;
+import Models.LopHocPhan81;
+import Models.MonHoc81;
+import Models.PhongHoc81;
+import Control.DatabaseConnector;
+import static Models.LopHocPhan81.STTLHP;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class LenLichLopHocPhanForm81 extends JFrame {
     private JComboBox<String> monHocComboBox;
@@ -27,6 +38,42 @@ public class LenLichLopHocPhanForm81 extends JFrame {
         setSize(800, 500); // Increased the size of the interface
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+        
+         try {
+            STTLHP = LenLichLopHocPhanDAO81.getLastMaLop() + 1;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            STTLHP = 1; // Default value if there is an error
+        }
+         
+        JPanel mainPanel = new JPanel(new BorderLayout());
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JButton homeButton = new JButton("Trang chủ");
+        JButton logoutButton = new JButton("Đăng xuất");
+
+        buttonPanel.add(homeButton);
+        buttonPanel.add(logoutButton);
+        topPanel.add(buttonPanel, BorderLayout.WEST);
+
+        homeButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                new TrangChuForm81().setVisible(true);
+                dispose();
+            }
+        });
+
+        logoutButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                new Login().setVisible(true);
+                dispose();
+            }
+        });
+
+        mainPanel.add(topPanel, BorderLayout.NORTH);
 
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
@@ -45,23 +92,23 @@ public class LenLichLopHocPhanForm81 extends JFrame {
 
         // Populate the combo boxes
         try {
-            List<String> courses = LenLichLopHocPhanDAO81.getCourses();
-            List<String> rooms = LenLichLopHocPhanDAO81.getRooms();
-            List<String> timeSlots = LenLichLopHocPhanDAO81.getTimeSlots();
+            List<MonHoc81> courses = LenLichLopHocPhanDAO81.getMonHoc();
+            List<PhongHoc81> rooms = LenLichLopHocPhanDAO81.getPhongHoc();
+            List<GioHoc81> timeSlots = LenLichLopHocPhanDAO81.getGioHoc();
 
             monHocComboBox.addItem("Chọn môn học");
-            for (String course : courses) {
-                monHocComboBox.addItem(course);
+            for (MonHoc81 course : courses) {
+                monHocComboBox.addItem(course.getTenMon() );
             }
 
             phongHocComboBox.addItem("Chọn phòng học");
-            for (String room : rooms) {
-                phongHocComboBox.addItem(room);
+            for (PhongHoc81 room : rooms) {
+                phongHocComboBox.addItem(room.getTenPhongHoc());
             }
 
             thoiGianComboBox.addItem("Chọn khung giờ");
-            for (String timeSlot : timeSlots) {
-                thoiGianComboBox.addItem(timeSlot);
+            for (GioHoc81 timeSlot : timeSlots) {
+                thoiGianComboBox.addItem(timeSlot.getKhungGio());
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -89,28 +136,32 @@ public class LenLichLopHocPhanForm81 extends JFrame {
         });
 
         // Action listener for the Luu button
-        buttonLuuLHP.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (monHocComboBox.getSelectedIndex() == 0 || phongHocComboBox.getSelectedIndex() == 0 || thoiGianComboBox.getSelectedIndex() == 0) {
-                    messageLabel.setText("Vui lòng chọn đủ thông tin!");
-                    messageLabel.setForeground(Color.RED);
-                } else if (isDuplicateEntry(monHocComboBox.getSelectedItem().toString(),
-                        phongHocComboBox.getSelectedItem().toString(), thoiGianComboBox.getSelectedItem().toString())) {
+buttonLuuLHP.addActionListener(new ActionListener() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (monHocComboBox.getSelectedIndex() == 0 || phongHocComboBox.getSelectedIndex() == 0 || thoiGianComboBox.getSelectedIndex() == 0) {
+            messageLabel.setText("Vui lòng chọn đủ thông tin!");
+            messageLabel.setForeground(Color.RED);
+        } else {
+            try {
+                String phongHoc = phongHocComboBox.getSelectedItem().toString();
+                String thoiGian = thoiGianComboBox.getSelectedItem().toString();
+                if (isDuplicateSchedule(phongHoc, thoiGian)) {
                     messageLabel.setText("Đã tồn tại lớp học phần có phòng học và giờ học tương tự, vui lòng chọn phòng học hoặc khung giờ học khác.");
                     messageLabel.setForeground(Color.RED);
                 } else {
                     try {
-                        LenLichLopHocPhanDAO81.saveClassSchedule(monHocComboBox.getSelectedItem().toString(),
-                                phongHocComboBox.getSelectedItem().toString(), thoiGianComboBox.getSelectedItem().toString());
+                        String tenMon = monHocComboBox.getSelectedItem().toString();
+                        LenLichLopHocPhanDAO81.luuLopHocPhan(new LopHocPhan81(STTLHP, tenMon, 70, phongHoc, thoiGian));
+                        STTLHP++;
                         messageLabel.setText("Lưu lớp học phần thành công.");
                         messageLabel.setForeground(Color.GREEN);
                         // Add functionality to save the data here
                         Object[] rowData = new Object[]{
-                                monHocComboBox.getSelectedItem(),
-                                phongHocComboBox.getSelectedItem(),
-                                thoiGianComboBox.getSelectedItem(),
-                                "Sửa Xóa"
+                            monHocComboBox.getSelectedItem(),
+                            phongHocComboBox.getSelectedItem(),
+                            thoiGianComboBox.getSelectedItem(),
+                            "Sửa Xóa"
                         };
                         allRows.add(rowData); // Add to all rows
                         tableModel.addRow(rowData);
@@ -119,8 +170,14 @@ public class LenLichLopHocPhanForm81 extends JFrame {
                         ex.printStackTrace();
                     }
                 }
+            } catch (SQLException ex) {
+                Logger.getLogger(LenLichLopHocPhanForm81.class.getName()).log(Level.SEVERE, null, ex);
             }
-        });
+        }
+    }
+});
+
+
 
         // Action listener for the monHocComboBox
         monHocComboBox.addActionListener(new ActionListener() {
@@ -184,26 +241,36 @@ public class LenLichLopHocPhanForm81 extends JFrame {
 
         panel.add(tablePanel, BorderLayout.CENTER);
 
-        add(panel);
+        mainPanel.add(panel, BorderLayout.CENTER);
+
+        add(mainPanel);
     }
 
-    private boolean isDuplicateEntry(String monHoc, String phongHoc, String thoiGian) {
-        for (int i = 0; i < tableModel.getRowCount(); i++) {
-            if (tableModel.getValueAt(i, 0).equals(monHoc) && tableModel.getValueAt(i, 1).equals(phongHoc) && tableModel.getValueAt(i, 2).equals(thoiGian)) {
-                return true;
-            }
-        }
-        return false;
-    }
+public static boolean isDuplicateSchedule(String phongHoc, String thoiGian) throws SQLException {
+    Connection conn = DatabaseConnector.getConnection();
+    String query = "SELECT COUNT(*) FROM lophocphan WHERE phongHoc = ? AND khungGio = ?";
+    PreparedStatement stmt = conn.prepareStatement(query);
+    stmt.setString(1, phongHoc);
+    stmt.setString(2, thoiGian);
+    ResultSet rs = stmt.executeQuery();
+    rs.next();
+    boolean isDuplicate = rs.getInt(1) > 0;
+    rs.close();
+    stmt.close();
+    conn.close();
+    return isDuplicate;
+}
+
+
 
     private void filterTable() {
-        String selectedCourse = monHocComboBox.getSelectedItem().toString();
+        String monHoc = monHocComboBox.getSelectedItem().toString();
         try {
-            if (selectedCourse.equals("Chọn môn học")) {
+            if (monHoc.equals("Chọn môn học")) {
                 allRows = new ArrayList<>();
                 tableModel.setRows(allRows);
             } else {
-                allRows = LenLichLopHocPhanDAO81.getClassSchedules(selectedCourse);
+                allRows = LenLichLopHocPhanDAO81.getLopHocPhan(monHoc);
                 tableModel.setRows(allRows);
             }
         } catch (SQLException e) {
@@ -315,11 +382,13 @@ public class LenLichLopHocPhanForm81 extends JFrame {
                         @Override
                         protected Void doInBackground() throws Exception {
                             try {
-                                LenLichLopHocPhanDAO81.deleteClassSchedule(
+                                LenLichLopHocPhanDAO81.xoaLopHocPhan(
                                         tableModel.getValueAt(row, 0).toString(),
                                         tableModel.getValueAt(row, 1).toString(),
                                         tableModel.getValueAt(row, 2).toString()
                                 );
+                                messageLabel.setText("Xóa lớp học phần thành công!");
+                                messageLabel.setForeground(Color.RED);
                             } catch (SQLException ex) {
                                 ex.printStackTrace();
                             }

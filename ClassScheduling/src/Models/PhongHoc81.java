@@ -12,6 +12,9 @@ public class PhongHoc81 {
     private String idPhongHoc;
     private String tenPhongHoc;
 
+    public PhongHoc81() {
+    }
+
     // Constructor
     public PhongHoc81(String idPhongHoc, String tenPhongHoc) {
         this.idPhongHoc = idPhongHoc;

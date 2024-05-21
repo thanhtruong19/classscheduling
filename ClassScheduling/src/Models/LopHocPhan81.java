@@ -14,6 +14,10 @@ public class LopHocPhan81 {
     private int soSinhVien;
     private String idPhongHoc;
     private String idGioHoc;
+    public static int STTLHP = 1;
+
+    public LopHocPhan81() {
+    }
 
     // Constructor
     public LopHocPhan81(int maLop, String maMon, int soSinhVien, String idPhongHoc, String idGioHoc) {

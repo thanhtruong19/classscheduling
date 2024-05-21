@@ -12,37 +12,34 @@ public class MonHoc81 {
     private String maMon;
     private int soTinChi;
     private String tenMon;
-
     // Constructor
-    public MonHoc81(String maMon, int soTinChi, String tenMon) {
-        this.maMon = maMon;
-        this.soTinChi = soTinChi;
-        this.tenMon = tenMon;
-    }
 
+    public MonHoc81() {
+    }
+    
+    public MonHoc81(String maMon, String tenMon, int soTinChi) {
+        this.maMon = maMon;
+        this.tenMon = tenMon;
+        this.soTinChi = soTinChi;
+    }
     // Getters and Setters
     public String getMaMon() {
         return maMon;
     }
-
     public void setMaMon(String maMon) {
         this.maMon = maMon;
     }
-
-    public int getSoTinChi() {
-        return soTinChi;
-    }
-
-    public void setSoTinChi(int soTinChi) {
-        this.soTinChi = soTinChi;
-    }
-
     public String getTenMon() {
         return tenMon;
     }
-
     public void setTenMon(String tenMon) {
         this.tenMon = tenMon;
+    }
+   public int getSoTinChi() {
+        return soTinChi;
+    }
+    public void setSoTinChi(int soTinChi) {
+        this.soTinChi = soTinChi;
     }
 }
 
